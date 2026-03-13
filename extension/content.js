@@ -90,10 +90,10 @@ observer.observe(document.body, {
     subtree: true 
 });
 
+// Removed yellow border, just set the flag so we know it's scanning internally
 function showScanningIndicator(element) {
     if (!element.dataset.cgScanning) {
         element.dataset.cgScanning = "true";
-        element.style.setProperty('box-shadow', 'inset 0 0 0 2px #facc15', 'important'); // Yellow border while typing
     }
 }
 
@@ -120,11 +120,13 @@ function checkTextToxicity(text, element) {
 }
 
 function showWarning(element) {
-    // Apply inline styles to ensure we override website CSS
-    element.style.setProperty('box-shadow', 'inset 0 0 0 2px red, 0 0 8px rgba(255, 0, 0, 0.5)', 'important');
-    element.style.setProperty('background-color', 'rgba(255, 0, 0, 0.05)', 'important');
-    element.style.setProperty('transition', 'all 0.3s ease', 'important');
-    element.style.setProperty('outline', 'none', 'important');
+    // Apply inline styles to turn text red/orange
+    element.style.setProperty('color', '#ff4500', 'important'); // Orange-red text
+    element.style.setProperty('font-weight', 'bold', 'important');
+    
+    // Find and disable the "Send" button on Instagram
+    // Instagram's Send button is usually a nearby div with role="button" containing "Send"
+    disableSendButton(element);
     
     // Check if warning tooltip already exists
     let tooltipId = "cg-warning-" + Math.random().toString(36).substr(2, 9);
@@ -134,7 +136,7 @@ function showWarning(element) {
         const tooltip = document.createElement("div");
         tooltip.id = tooltipId;
         tooltip.className = "comment-guard-tooltip";
-        tooltip.innerText = "🚨 Toxic content detected!";
+        tooltip.innerText = "🚨 Toxic content detected! Please edit your message.";
         
         // Position it right above the input
         const rect = element.getBoundingClientRect();
@@ -148,11 +150,30 @@ function showWarning(element) {
     }
 }
 
+function disableSendButton(inputElement) {
+    // Traverse up to find the common chat input container
+    const container = inputElement.closest('form') || inputElement.closest('div[style*="border"], div[role="button"]')?.parentElement?.parentElement || document.body;
+    
+    // Look for divs or buttons that say "Send"
+    const sendButtons = Array.from(container.querySelectorAll('div[role="button"], button')).filter(btn => {
+        return btn.textContent.trim().toLowerCase() === 'send';
+    });
+    
+    sendButtons.forEach(btn => {
+        btn.dataset.cgDisabledBtn = "true";
+        btn.style.setProperty('pointer-events', 'none', 'important');
+        btn.style.setProperty('opacity', '0.5', 'important');
+        btn.style.setProperty('cursor', 'not-allowed', 'important');
+    });
+}
+
 function clearWarning(element) {
-    element.style.removeProperty('box-shadow');
-    element.style.removeProperty('background-color');
-    element.style.removeProperty('transition');
-    element.style.removeProperty('outline');
+    // Remove text coloring
+    element.style.removeProperty('color');
+    element.style.removeProperty('font-weight');
+    
+    // Re-enable Send buttons
+    enableSendButtons();
     
     if (element.dataset.cgScanning) {
         delete element.dataset.cgScanning;
@@ -165,4 +186,14 @@ function clearWarning(element) {
         }
         delete element.dataset.cgTooltip;
     }
+}
+
+function enableSendButtons() {
+    const disabledButtons = document.querySelectorAll('[data-cg-disabled-btn="true"]');
+    disabledButtons.forEach(btn => {
+        btn.style.removeProperty('pointer-events');
+        btn.style.removeProperty('opacity');
+        btn.style.removeProperty('cursor');
+        delete btn.dataset.cgDisabledBtn;
+    });
 }
