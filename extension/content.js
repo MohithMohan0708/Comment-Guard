@@ -21,7 +21,10 @@ function handleInputEvent(event) {
     // Find the actual editable container
     let editableContainer = target;
     if (editableContainer && !editableContainer.isContentEditable && typeof editableContainer.closest === 'function') {
-        const closestContentEditable = editableContainer.closest('[contenteditable="true"], [contenteditable="plaintext-only"], textarea, input[type="text"]');
+        // Look for standard inputs OR WhatsApp/Facebook Lexical editors
+        const closestContentEditable = editableContainer.closest(
+            '[contenteditable="true"], [contenteditable="plaintext-only"], textarea, input[type="text"], div[data-lexical-editor="true"], div[title="Type a message"]'
+        );
         if (closestContentEditable) {
             editableContainer = closestContentEditable;
         }
@@ -155,18 +158,27 @@ function showWarning(element) {
 
 function disableSendButton(inputElement) {
     // Traverse up to find the common chat input container
-    const container = inputElement.closest('form') || inputElement.closest('div[style*="border"], div[role="button"]')?.parentElement?.parentElement || document.body;
+    const container = inputElement.closest('form') || 
+                      inputElement.closest('div[style*="border"], div[role="button"]')?.parentElement?.parentElement || 
+                      inputElement.closest('footer') || // WhatsApp Web usually puts chat in a footer
+                      document.body;
     
-    // Look for divs or buttons that say "Send"
-    const sendButtons = Array.from(container.querySelectorAll('div[role="button"], button')).filter(btn => {
-        return btn.textContent.trim().toLowerCase() === 'send';
+    // Look for divs or buttons that say "Send" OR WhatsApp's send icon (usually aria-label="Send")
+    const sendButtons = Array.from(container.querySelectorAll('div[role="button"], button, span[data-icon="send"]')).filter(btn => {
+        const text = btn.textContent.trim().toLowerCase();
+        const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
+        const dataIcon = (btn.getAttribute('data-icon') || '').toLowerCase();
+        return text === 'send' || ariaLabel === 'send' || dataIcon === 'send';
     });
     
     sendButtons.forEach(btn => {
-        btn.dataset.cgDisabledBtn = "true";
-        btn.style.setProperty('pointer-events', 'none', 'important');
-        btn.style.setProperty('opacity', '0.5', 'important');
-        btn.style.setProperty('cursor', 'not-allowed', 'important');
+        // If it's a span (like WhatsApp's icon), disable its parent button/div
+        const targetBtn = btn.tagName === 'SPAN' ? btn.parentElement : btn;
+        
+        targetBtn.dataset.cgDisabledBtn = "true";
+        targetBtn.style.setProperty('pointer-events', 'none', 'important');
+        targetBtn.style.setProperty('opacity', '0.2', 'important'); // Make it very obvious it's disabled
+        targetBtn.style.setProperty('cursor', 'not-allowed', 'important');
     });
 }
 
