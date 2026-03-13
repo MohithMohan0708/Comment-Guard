@@ -21,9 +21,9 @@ function handleInputEvent(event) {
     // Find the actual editable container
     let editableContainer = target;
     if (editableContainer && !editableContainer.isContentEditable && typeof editableContainer.closest === 'function') {
-        // Look for standard inputs OR WhatsApp/Facebook Lexical editors
+        // Look for standard inputs OR WhatsApp/Facebook/YouTube specialized editors
         const closestContentEditable = editableContainer.closest(
-            '[contenteditable="true"], [contenteditable="plaintext-only"], textarea, input[type="text"], div[data-lexical-editor="true"], div[title="Type a message"]'
+            '[contenteditable="true"], [contenteditable="plaintext-only"], textarea, input[type="text"], div[data-lexical-editor="true"], div[title="Type a message"], yt-formatted-string#contenteditable-root, div#contenteditable-root'
         );
         if (closestContentEditable) {
             editableContainer = closestContentEditable;
@@ -157,18 +157,23 @@ function showWarning(element) {
 }
 
 function disableSendButton(inputElement) {
-    // Traverse up to find the common chat input container
+    // Traverse up to find the common chat/comment container
     const container = inputElement.closest('form') || 
+                      inputElement.closest('ytd-commentbox') || // YouTube comment box
                       inputElement.closest('div[style*="border"], div[role="button"]')?.parentElement?.parentElement || 
                       inputElement.closest('footer') || // WhatsApp Web usually puts chat in a footer
                       document.body;
     
-    // Look for divs or buttons that say "Send" OR WhatsApp's send icon (usually aria-label="Send")
-    const sendButtons = Array.from(container.querySelectorAll('div[role="button"], button, span[data-icon="send"]')).filter(btn => {
+    // Look for generic send/post/reply buttons and platform-specific icons
+    const sendButtons = Array.from(container.querySelectorAll('div[role="button"], button, span[data-icon="send"], ytd-button-renderer#submit-button')).filter(btn => {
         const text = btn.textContent.trim().toLowerCase();
         const ariaLabel = (btn.getAttribute('aria-label') || '').toLowerCase();
         const dataIcon = (btn.getAttribute('data-icon') || '').toLowerCase();
-        return text === 'send' || ariaLabel === 'send' || dataIcon === 'send';
+        const id = (btn.id || '').toLowerCase();
+        
+        return text === 'send' || text === 'post' || text === 'reply' || text === 'comment' || 
+               ariaLabel === 'send' || ariaLabel === 'post' || ariaLabel === 'reply' || ariaLabel === 'comment' ||
+               dataIcon === 'send' || id === 'submit-button';
     });
     
     sendButtons.forEach(btn => {
