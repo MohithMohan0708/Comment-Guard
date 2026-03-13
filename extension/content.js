@@ -10,19 +10,18 @@ let currentTarget = null;
 // or they capture the event differently. We listen to both 'input' and 'keyup' to be safe.
 
 function handleInputEvent(event) {
-    let target = event.target;
+    let target = event.target || event; // handle both events and elements directly
     if (!target) return;
     
-    // Safely handle text nodes (sometimes events fire directly on text nodes in certain browsers/editors)
-    if (target.nodeType === 3) { // Node.TEXT_NODE
+    // Safely handle text nodes
+    if (target.nodeType === 3) {
         target = target.parentNode;
     }
     
-    // We need to look up the tree to find the actual contenteditable container
-    // Instagram uses deeply nested <span> inside <p> inside <div contenteditable="true">
+    // Find the actual editable container
     let editableContainer = target;
     if (editableContainer && !editableContainer.isContentEditable && typeof editableContainer.closest === 'function') {
-        const closestContentEditable = editableContainer.closest('[contenteditable="true"], [contenteditable="plaintext-only"]');
+        const closestContentEditable = editableContainer.closest('[contenteditable="true"], [contenteditable="plaintext-only"], textarea, input[type="text"]');
         if (closestContentEditable) {
             editableContainer = closestContentEditable;
         }
@@ -30,7 +29,7 @@ function handleInputEvent(event) {
 
     if (!editableContainer) return;
 
-    // Check if the resolved container is an input field, textarea, or contenteditable
+    // Check if valid input
     const isTextInput = editableContainer.tagName === 'INPUT' && (editableContainer.type === 'text' || editableContainer.type === 'search');
     const isTextArea = editableContainer.tagName === 'TEXTAREA';
     const isContentEditable = editableContainer.isContentEditable || 
@@ -41,31 +40,62 @@ function handleInputEvent(event) {
         clearTimeout(typingTimer);
         currentTarget = editableContainer;
         
-        // Extract text depending on the element type
         let text = "";
         if (isTextInput || isTextArea) {
             text = editableContainer.value;
         } else if (isContentEditable) {
-            // textContent safely grabs all text from nested spans/p-tags
-            text = editableContainer.textContent || editableContainer.innerText || "";
+            // Instagram/Facebook use Draft.js/Lexical which heavily nests text.
+            // InnerText is actually better here because it preserves spaces/newlines.
+            text = editableContainer.innerText || editableContainer.textContent || "";
         }
 
         if (text.trim().length > 0) {
-            // Wait until the user stops typing
+            showScanningIndicator(editableContainer);
+            
             typingTimer = setTimeout(() => {
                 checkTextToxicity(text, editableContainer);
             }, doneTypingInterval);
         } else {
-            // Clear warnings if input is empty
             clearWarning(editableContainer);
         }
     }
 }
 
-// React sites heavily intercept 'input' and 'change', but 'keyup' almost always bubbles up reliably.
+// 1. Standard event listeners
 document.addEventListener('input', handleInputEvent, true);
 document.addEventListener('keyup', handleInputEvent, true);
 document.addEventListener('paste', handleInputEvent, true);
+
+// 2. MutationObserver (Critical for React/Instagram)
+// React often updates the DOM directly without firing standard input events that bubble up
+const observer = new MutationObserver((mutations) => {
+    for (let mutation of mutations) {
+        if (mutation.type === 'characterData' || mutation.type === 'childList') {
+            // If text changed inside a contenteditable, trigger our handler
+            let target = mutation.target;
+            if (target.nodeType === 3) target = target.parentNode; // Get element from text node
+            
+            if (target && typeof target.closest === 'function' && target.closest('[contenteditable="true"], [contenteditable="plaintext-only"]')) {
+                handleInputEvent({ target: target });
+                break; // Only need to trigger once per batch of mutations
+            }
+        }
+    }
+});
+
+// Start observing the entire body for changes
+observer.observe(document.body, { 
+    characterData: true, 
+    childList: true, 
+    subtree: true 
+});
+
+function showScanningIndicator(element) {
+    if (!element.dataset.cgScanning) {
+        element.dataset.cgScanning = "true";
+        element.style.setProperty('box-shadow', 'inset 0 0 0 2px #facc15', 'important'); // Yellow border while typing
+    }
+}
 
 
 function checkTextToxicity(text, element) {
@@ -123,6 +153,10 @@ function clearWarning(element) {
     element.style.removeProperty('background-color');
     element.style.removeProperty('transition');
     element.style.removeProperty('outline');
+    
+    if (element.dataset.cgScanning) {
+        delete element.dataset.cgScanning;
+    }
     
     if (element.dataset.cgTooltip) {
         const tooltip = document.getElementById(element.dataset.cgTooltip);
