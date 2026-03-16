@@ -9,10 +9,8 @@
   ],
   "host_permissions": [
     "http://localhost:8000/*",
-    "https://*.youtube.com/*",
-    "https://*.instagram.com/*",
-    "https://*.twitter.com/*",
-    "https://*.x.com/*"
+    "https://*/*",
+    "http://*/*"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -33,10 +31,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://*.youtube.com/*",
-        "https://*.instagram.com/*",
-        "https://*.twitter.com/*",
-        "https://*.x.com/*"
+        "https://*/*",
+        "http://*/*"
       ],
       "js": ["content.js"],
       "css": ["content.css"],

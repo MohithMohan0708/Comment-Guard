@@ -1,0 +1,26 @@
+/* content.css */
+
+.comment-guard-toxic-input {
+    outline: 2px solid red !important;
+    border-color: red !important;
+    background-color: rgba(255, 0, 0, 0.05) !important;
+    transition: all 0.3s ease;
+}
+
+.comment-guard-tooltip {
+    background-color: #ff3333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+    font-family: Arial, sans-serif;
+    pointer-events: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    animation: cg-fade-in 0.3s;
+}
+
+@keyframes cg-fade-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}

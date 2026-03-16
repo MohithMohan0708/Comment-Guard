@@ -3,7 +3,7 @@ __pycache__/
 *.sqlite3
 
 # Models
-backend/model_output/*$py.class
+backend/model_output/
 .venv/
 .env
 
@@ -17,3 +17,7 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Temp status files
+git_status.txt
+git_remote.txt
