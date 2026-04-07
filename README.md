@@ -19,16 +19,14 @@ Welcome to the Comment Guard documentation. This guide covers every aspect of th
 
 ## Quick Start
 
-1. **Start the backend**: 
-   ```powershell
-   cd backend
-   python main.py
-   ```
-2. **Load the extension**: 
+1. **Load the extension**: 
+   - Extract `CommentGuard-v2.1.zip` (or use the `extension/` folder in this repository)
    - Open `chrome://extensions/`
    - Enable **Developer Mode**
    - Click **Load Unpacked**
-   - Select the `extension/` folder in this repository
-3. **Test it**: Navigate to YouTube or Instagram and type a comment
+   - Select the `extension/` folder
+2. **Test it**: Navigate to YouTube or Instagram and type a comment
+
+*Note: The extension automatically connects to the live backend hosted on Hugging Face Spaces (https://tejesh916k-comment-guard-api.hf.space), so you don't need to run it locally.*
 
 For detailed instructions, see the [Extension Guide](EXTENSION_LOAD_GUIDE.md).

@@ -10,9 +10,9 @@ To use the extension in your browser, you need to load the **`extension/`** fold
    - Alternatively, click the **Three Dots (⋮) -> Extensions -> Manage Extensions**.
 3. **Enable Developer Mode**:
    - In the top right corner, toggle the switch for **Developer mode** to ON.
-4. **Load the Extension**:
+4. **Extract and Load the Extension**:
+   - Extract the `CommentGuard-v2.1.zip` archive (or use the `extension` folder in this repository).
    - Click the **Load unpacked** button that appears in the top left.
-   - In the file picker, navigate to your project folder: `c:\Users\kesan\OneDrive\Desktop\team_1b`.
    - Select the **`extension`** folder (the folder containing `manifest.json`).
    - Click **Select Folder**.
 5. **Verify Installation**:
@@ -21,5 +21,5 @@ To use the extension in your browser, you need to load the **`extension/`** fold
 
 ## Using the Extension
 - Pin the extension to your toolbar for easy access.
-- Click the extension icon to see the popup and make sure the **Backend Status** is Green (ensure your FastAPI server is running with `run_backend.bat`).
+- Click the extension icon to see the popup. The backend connects automatically to the live Hugging Face deployment (`https://tejesh916k-comment-guard-api.hf.space`). You should see a green "Connected to Guard AI" status without running anything locally!
 - Navigate to YouTube, Instagram, or Facebook to see it in action!
