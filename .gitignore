@@ -21,3 +21,7 @@ Thumbs.db
 # Temp status files
 git_status.txt
 git_remote.txt
+*.txt
+*.zip
+CommentGuard-v2.1/
+hf_space/
